@@ -24,11 +24,12 @@ def public_local_ports(container, type='tcp'):
     return ports
 
 
-env = jinja2.Environment(extensions=[
-    'jinja2.ext.loopcontrols',
-    'jinja2.ext.with_',
-    'jinja2.ext.do',
-])
+env = jinja2.Environment(undefined=jinja2.StrictUndefined,
+                         extensions=[
+                             'jinja2.ext.loopcontrols',
+                             'jinja2.ext.with_',
+                             'jinja2.ext.do',
+                         ], )
 env.filters['public_local_ports'] = public_local_ports
 
 
