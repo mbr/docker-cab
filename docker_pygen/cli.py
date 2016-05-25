@@ -12,6 +12,26 @@ info = partial(click.echo, err=True)
 # helpful: https://docs.docker.com/engine/reference/api/images/event_state.png
 
 
+def public_local_ports(container, type='tcp'):
+    ports = []
+    for port in container['Ports']:
+        if port.get('Type') != type:
+            continue
+
+        if 'PublicPort' in port and port.get('IP') == '127.0.0.1':
+            ports.append(port['PublicPort'])
+
+    return ports
+
+
+env = jinja2.Environment(extensions=[
+    'jinja2.ext.loopcontrols',
+    'jinja2.ext.with_',
+    'jinja2.ext.do',
+])
+env.filters['public_local_ports'] = public_local_ports
+
+
 def update_configurations(cl, template, output_file, events=[]):
     containers = cl.containers(all=True)
     images = cl.images()
@@ -20,8 +40,6 @@ def update_configurations(cl, template, output_file, events=[]):
 
     info('Collected {} running containers and {} images'.format(
         len(containers), len(images)))
-
-    env = jinja2.Environment()
 
     with open(template) as tpl_src:
         tpl = env.from_string(tpl_src.read())
