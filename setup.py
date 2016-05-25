@@ -21,10 +21,10 @@ setup(
     url='https://github.com/mbr/docker-pygen',
     license='MIT',
     packages=find_packages(exclude=['tests']),
-    install_requires=['jinja2', 'click'],
+    install_requires=['jinja2', 'click', 'docker-py'],
     entry_points={
         'console_scripts': [
-            'docker-pygen = docker-pygen.cli:cli',
+            'docker-pygen = docker_pygen.cli:cli',
         ],
     },
     classifiers=[
