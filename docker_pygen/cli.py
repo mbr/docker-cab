@@ -82,14 +82,19 @@ def update_configurations(cl, template, output_file, events=[]):
 @click.option('-u',
               '--url',
               default=DEFAULT_URL,
-              help='The url used to connect ot the docker server [default: ' +
+              help='The url used to connect to the docker server [default: ' +
               DEFAULT_URL + ']')
 @click.option('-o',
               '--output-file',
               help='Output directory for template files',
               type=click.Path())
+@click.option('-w',
+              '--watch',
+              is_flag=True,
+              default=False,
+              help='Wait for events and rerun after each change')
 @click.argument('template')
-def cli(url, template, output_file):
+def cli(url, template, output_file, watch):
     # initialize Client
     cl = Client(base_url=url, version='auto')
 
@@ -99,3 +104,7 @@ def cli(url, template, output_file):
          '{v[ApiVersion]}.'.format(v=v))
 
     update_configurations(cl, template, output_file)
+    if watch:
+        for ev in cl.events():
+            info('Received event: {}'.format(ev))
+            pass
