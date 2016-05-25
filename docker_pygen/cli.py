@@ -24,6 +24,22 @@ def public_local_ports(container, type='tcp'):
     return ports
 
 
+def name_and_port(container):
+    names = container.get('Names', [])
+
+    if not names:
+        info('Skipping container {}, has no name'.format(container['Id']))
+        return None
+
+    ports = public_local_ports(container)
+    if not ports:
+        info('Skipping container {}, has no exposted ports bound to '
+             '127.0.0.1'.format(container['Id']))
+        return None
+
+    return names[0], sorted(ports)[0]
+
+
 env = jinja2.Environment(undefined=jinja2.StrictUndefined,
                          extensions=[
                              'jinja2.ext.loopcontrols',
@@ -31,6 +47,7 @@ env = jinja2.Environment(undefined=jinja2.StrictUndefined,
                              'jinja2.ext.do',
                          ], )
 env.filters['public_local_ports'] = public_local_ports
+env.filters['name_and_port'] = name_and_port
 
 
 def update_configurations(cl, template, output_file, events=[]):
