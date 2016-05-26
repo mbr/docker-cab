@@ -53,7 +53,6 @@ def update_configurations(cl, template, output_file, notifications):
     with open(template) as tpl_src:
         tpl = env.from_string(tpl_src.read())
 
-        info('Compiled template {}'.format(template))
         result = tpl.render(containers=containers, images=images)
 
     info('Successfully rendered template {}'.format(template))
