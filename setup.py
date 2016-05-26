@@ -13,7 +13,7 @@ def read(fname):
 
 setup(
     name='docker-pygen',
-    version='0.2.0.dev1',
+    version='0.3.0.dev1',
     description='Generate configuration files based on docker state changes.',
     long_description=read('README.rst'),
     author='Marc Brinkmann',
