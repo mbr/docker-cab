@@ -17,30 +17,6 @@ info = partial(click.echo, err=True)
 # helpful: https://docs.docker.com/engine/reference/api/images/event_state.png
 
 
-class ListArg(object):
-    __name__ = 'ListArg'
-
-    def __init__(self, sep=',', min=None, max=None):
-        self.sep = sep
-        self.min = None
-        self.max = None
-
-    def __call__(self, value):
-        if value is None:
-            return None
-
-        if self.max:
-            parts = value.split(sep=self.sep, maxsplit=self.max)
-        else:
-            parts = value.split(sep=self.sep)
-
-        if self.min and len(parts) < self.min:
-            raise ValueError('At least {} fields are required'.format(
-                self.min))
-
-        return parts
-
-
 def exposed_addr(c, ptype='tcp'):
     ports = [(port['IP'], int(port['PublicPort']))
              for port in c['Ports'] if port['Type'] == ptype and 'IP' in port]
@@ -126,7 +102,7 @@ def events_listener(cl, q):
 @click.option('-s',
               '--signal',
               'notifications',
-              type=ListArg(':', 2, 2),
+              type=(str, str),
               multiple=True,
               help='Restart a container using signal. Ex: "HUP:nginx"')
 @click.argument('template')
