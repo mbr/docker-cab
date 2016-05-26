@@ -41,49 +41,35 @@ class ListArg(object):
         return parts
 
 
-def public_local_ports(container, type='tcp'):
-    ports = []
-    for port in container['Ports']:
-        if port.get('Type') != type:
-            continue
-
-        if 'PublicPort' in port and port.get('IP') == '127.0.0.1':
-            ports.append(port['PublicPort'])
-
-    return ports
+def exposed_addr(c, ptype='tcp'):
+    ports = [(port['IP'], int(port['PublicPort']))
+             for port in c['Ports'] if port['Type'] == ptype and 'IP' in port]
+    return ports[0] if ports else None
 
 
-def name_and_port(container):
-    names = container.get('Names', [])
+env = jinja2.Environment(
+    # undefined=jinja2.StrictUndefined,
+    extensions=[
+        'jinja2.ext.loopcontrols',
+        'jinja2.ext.with_',
+        'jinja2.ext.do',
+    ], )
 
-    if not names:
-        info('Skipping container {}, has no name'.format(container['Id']))
-        return None
-
-    ports = public_local_ports(container)
-    if not ports:
-        info('Skipping container {}, has no exposted ports bound to '
-             '127.0.0.1'.format(container['Id']))
-        return None
-
-    return names[0], sorted(ports)[0]
-
-
-env = jinja2.Environment(undefined=jinja2.StrictUndefined,
-                         extensions=[
-                             'jinja2.ext.loopcontrols',
-                             'jinja2.ext.with_',
-                             'jinja2.ext.do',
-                         ], )
-env.filters['public_local_ports'] = public_local_ports
-env.filters['name_and_port'] = name_and_port
+# env.filters['public_local_ports'] = public_local_ports
+env.filters['exposed_addr'] = exposed_addr
+env.filters['env'] = lambda c: dict(v.split('=', 1)
+                                    for v in c['_inspect']['Config']['Env'])
 
 
 def update_configurations(cl, template, output_file, notifications):
     containers = cl.containers()
     images = cl.images()
-    container_details = {id: cl.inspect_container(c['Id']) for c in containers}
-    image_details = {id: cl.inspect_image(i['Id']) for i in images}
+
+    for container in containers:
+        container['_inspect'] = cl.inspect_container(container['Id'])
+
+    for image in images:
+        image['_inspect'] = cl.inspect_image(image['Id'])
 
     info('Collected {} running containers and {} images'.format(
         len(containers), len(images)))
@@ -92,10 +78,7 @@ def update_configurations(cl, template, output_file, notifications):
         tpl = env.from_string(tpl_src.read())
 
         info('Compiled template {}'.format(template))
-        result = tpl.render(containers=containers,
-                            images=images,
-                            container_details=container_details,
-                            image_details=image_details)
+        result = tpl.render(containers=containers, images=images)
 
     info('Successfully rendered template {}'.format(template))
 
