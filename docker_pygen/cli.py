@@ -1,4 +1,7 @@
 from functools import partial
+import json
+from queue import Queue, Empty
+from threading import Thread
 import sys
 
 import click
@@ -6,6 +9,8 @@ import jinja2
 from docker.client import Client
 
 DEFAULT_URL = 'unix://var/run/docker.sock'
+DEFAULT_EVENT_TYPES = ['create', 'destroy', 'die', 'kill', 'oom', 'pause',
+                       'restart', 'start', 'stop', 'unpause']
 
 info = partial(click.echo, err=True)
 
@@ -51,7 +56,7 @@ env.filters['name_and_port'] = name_and_port
 
 
 def update_configurations(cl, template, output_file, events=[]):
-    containers = cl.containers(all=True)
+    containers = cl.containers()
     images = cl.images()
     container_details = {id: cl.inspect_container(c['Id']) for c in containers}
     image_details = {id: cl.inspect_image(i['Id']) for i in images}
@@ -70,12 +75,18 @@ def update_configurations(cl, template, output_file, events=[]):
 
     info('Successfully rendered template {}'.format(template))
 
-    outp = open(output_file, 'w') if output_file else sys.stdout
-
-    with outp as out:
-        out.write(result)
+    out = open(output_file, 'w') if output_file else sys.stdout
+    out.write(result)
 
     info('Wrote {}'.format(output_file or 'to stdout'))
+
+
+def events_listener(cl, q):
+    # this *should* be threadsafe, as it is going to a different url endpoint
+    for ev in cl.events():
+        event = json.loads(ev.decode('ascii'))
+
+        q.put(event)
 
 
 @click.command('docker-pygen')
@@ -93,8 +104,18 @@ def update_configurations(cl, template, output_file, events=[]):
               is_flag=True,
               default=False,
               help='Wait for events and rerun after each change')
+@click.option('-e',
+              '--events',
+              default=','.join(DEFAULT_EVENT_TYPES),
+              help='Comma-seperated list of events to react upon')
+@click.option('-t',
+              '--timeout',
+              default=10,
+              help='Seconds to wait before updating, reset after each event')
 @click.argument('template')
-def cli(url, template, output_file, watch):
+def cli(url, template, output_file, watch, events, timeout):
+    event_types = events.split(',')
+
     # initialize Client
     cl = Client(base_url=url, version='auto')
 
@@ -103,8 +124,34 @@ def cli(url, template, output_file, watch):
     info('Connected to Docker {v[Version]}, api version '
          '{v[ApiVersion]}.'.format(v=v))
 
-    update_configurations(cl, template, output_file)
+    def do_update():
+        update_configurations(cl, template, output_file)
+
+    do_update()
+
     if watch:
-        for ev in cl.events():
-            info('Received event: {}'.format(ev))
-            pass
+        q = Queue()
+        t = Thread(target=events_listener, args=(cl, q), daemon=True)
+        t.start()
+
+        dirty = False
+
+        while True:
+            try:
+                event = q.get(block=True, timeout=timeout)
+            except Empty:
+                if not dirty:
+                    continue
+
+                info('Events settled after {} seconds, updating'.format(
+                    timeout))
+                do_update()
+                dirty = False
+            else:
+                if not event['Type'] == 'container':
+                    continue
+
+                info('Received container event {0[Action]}'.format(event))
+
+                if event['Action'] in event_types:
+                    dirty = True
