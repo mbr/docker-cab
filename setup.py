@@ -22,6 +22,7 @@ setup(
     license='MIT',
     packages=find_packages(exclude=['tests']),
     install_requires=['jinja2', 'click', 'docker-py'],
+    data_files=['templates/path.tpl'],
     entry_points={
         'console_scripts': [
             'docker-pygen = docker_pygen.cli:cli',
