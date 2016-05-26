@@ -9,8 +9,8 @@ import jinja2
 from docker.client import Client
 
 DEFAULT_URL = 'unix://var/run/docker.sock'
-DEFAULT_EVENT_TYPES = ['create', 'destroy', 'die', 'kill', 'oom', 'pause',
-                       'restart', 'start', 'stop', 'unpause']
+EVENT_TYPES = ['create', 'destroy', 'die', 'kill', 'oom', 'pause', 'restart',
+               'start', 'stop', 'unpause']
 
 info = partial(click.echo, err=True)
 
@@ -119,15 +119,10 @@ def events_listener(cl, q):
               is_flag=True,
               default=False,
               help='Wait for events and rerun after each change')
-@click.option('-e',
-              '--events',
-              type=ListArg(),
-              default=','.join(DEFAULT_EVENT_TYPES),
-              help='Comma-seperated list of events to react upon')
 @click.option('-t',
               '--timeout',
               default=5,
-              help='Seconds to wait before updating, reset after each event')
+              help='Seconds to wait before updating; reset after each event')
 @click.option('-s',
               '--signal',
               'notifications',
@@ -173,5 +168,5 @@ def cli(url, template, output_file, watch, events, timeout, notifications):
 
                 info('Received container event {0[Action]}'.format(event))
 
-                if event['Action'] in events:
+                if event['Action'] in EVENT_TYPES:
                     dirty = True
