@@ -40,6 +40,7 @@ env.filters['env'] = lambda c: dict(v.split('=', 1)
 def update_configurations(cl, template, output_file, notifications):
     containers = cl.containers()
     images = cl.images()
+    networks = cl.networks()
 
     for container in containers:
         container['_inspect'] = cl.inspect_container(container['Id'])
@@ -47,13 +48,23 @@ def update_configurations(cl, template, output_file, notifications):
     for image in images:
         image['_inspect'] = cl.inspect_image(image['Id'])
 
+    for network in networks:
+        network['_inspect'] = cl.inspect_network(network['Id'])
+
+    # map by id
+    containers = {c['Id']: c for c in containers}
+    images = {i['Id']: i for i in images}
+    networks = {n['Id']: n for n in networks}
+
     info('Collected {} running containers and {} images'.format(
         len(containers), len(images)))
 
     with open(template) as tpl_src:
         tpl = env.from_string(tpl_src.read())
 
-        result = tpl.render(containers=containers, images=images)
+        result = tpl.render(containers=containers,
+                            images=images,
+                            networks=networks)
 
     info('Successfully rendered template {}'.format(template))
 
