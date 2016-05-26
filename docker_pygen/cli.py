@@ -17,6 +17,30 @@ info = partial(click.echo, err=True)
 # helpful: https://docs.docker.com/engine/reference/api/images/event_state.png
 
 
+class ListArg(object):
+    __name__ = 'ListArg'
+
+    def __init__(self, sep=',', min=None, max=None):
+        self.sep = sep
+        self.min = None
+        self.max = None
+
+    def __call__(self, value):
+        if value is None:
+            return None
+
+        if self.max:
+            parts = value.split(sep=self.sep, maxsplit=self.max)
+        else:
+            parts = value.split(sep=self.sep)
+
+        if self.min and len(parts) < self.min:
+            raise ValueError('At least {} fields are required'.format(
+                self.min))
+
+        return parts
+
+
 def public_local_ports(container, type='tcp'):
     ports = []
     for port in container['Ports']:
@@ -55,7 +79,7 @@ env.filters['public_local_ports'] = public_local_ports
 env.filters['name_and_port'] = name_and_port
 
 
-def update_configurations(cl, template, output_file, events=[]):
+def update_configurations(cl, template, output_file, notifications):
     containers = cl.containers()
     images = cl.images()
     container_details = {id: cl.inspect_container(c['Id']) for c in containers}
@@ -79,6 +103,14 @@ def update_configurations(cl, template, output_file, events=[]):
     out.write(result)
 
     info('Wrote {}'.format(output_file or 'to stdout'))
+
+    # send notifications
+    for signal, cid in notifications:
+        info('Sending {} to {}'.format(signal, cid))
+        try:
+            cl.kill(cid, int(signal) if signal.isnumeric() else signal)
+        except Exception as e:
+            info('Error ignored: {}'.format(e))
 
 
 def events_listener(cl, q):
@@ -106,16 +138,21 @@ def events_listener(cl, q):
               help='Wait for events and rerun after each change')
 @click.option('-e',
               '--events',
+              type=ListArg(),
               default=','.join(DEFAULT_EVENT_TYPES),
               help='Comma-seperated list of events to react upon')
 @click.option('-t',
               '--timeout',
-              default=10,
+              default=5,
               help='Seconds to wait before updating, reset after each event')
+@click.option('-s',
+              '--signal',
+              'notifications',
+              type=ListArg(':', 2, 2),
+              multiple=True,
+              help='Restart a container using signal. Ex: "HUP:nginx"')
 @click.argument('template')
-def cli(url, template, output_file, watch, events, timeout):
-    event_types = events.split(',')
-
+def cli(url, template, output_file, watch, events, timeout, notifications):
     # initialize Client
     cl = Client(base_url=url, version='auto')
 
@@ -125,7 +162,7 @@ def cli(url, template, output_file, watch, events, timeout):
          '{v[ApiVersion]}.'.format(v=v))
 
     def do_update():
-        update_configurations(cl, template, output_file)
+        update_configurations(cl, template, output_file, notifications)
 
     do_update()
 
@@ -153,5 +190,5 @@ def cli(url, template, output_file, watch, events, timeout):
 
                 info('Received container event {0[Action]}'.format(event))
 
-                if event['Action'] in event_types:
+                if event['Action'] in events:
                     dirty = True
