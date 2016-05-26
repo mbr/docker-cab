@@ -105,7 +105,7 @@ def events_listener(cl, q):
               multiple=True,
               help='Restart a container using signal. Ex: "HUP:nginx"')
 @click.argument('template')
-def cli(url, template, output_file, watch, events, timeout, notifications):
+def cli(url, template, output_file, watch, timeout, notifications):
     # initialize Client
     cl = Client(base_url=url, version='auto')
 
