@@ -11,27 +11,40 @@
     proxy_pass http://{{fc.ip}}:{{fc.port}};
 {%- endmacro -%}
 
+{% macro ssl_enabled() -%}
+  ssl on;
+
+  # secure configuration, see
+  # https://raymii.org/s/tutorials/Strong_SSL_Security_On_nginx.html#The_BEAST_attack_and_RC4
+  ssl_ciphers 'EECDH+AESGCM:EDH+AESGCM:AES256+EECDH:AES256+EDH';
+  ssl_prefer_server_ciphers on;
+  ssl_session_cache shared:SSL:10m;
+{%- endmacro -%}
+
+
 {% for fc in fcs -%}
 upstream docker_{{fc.id}} {
   server {{fc.ip}}:{{fc.port}};
 }
+
 {% endfor -%}
 
 server {
+  listen 443 default_server;
 {% for fc in fcs -%}
-  {% if fc.virtual_path -%}
+  {%- if fc.virtual_path %}
   # REDIRECT: {{fc.virtual_path}}
   location ~ ^{{fc.virtual_path}}(/.*)?$ {
     proxy_set_header X-Script-Name /{{fc.virtual_path}};
     {{upstream_proxy(fc)}}
   }
 }
-
-{% endif -%}
+{%- endif -%}
 {% endfor -%}
 
 {% for fc in fcs -%}
-{% if fc.virtual_host -%}
+{%- if fc.virtual_host %}
+
 # HTTP: {{fc.virtual_host}}
 server {
   listen 80;
@@ -54,13 +67,7 @@ server {
   ssl_certificate           /etc/nginx/{{fc.virtual_host}}.crt;
   ssl_certificate_key       /etc/nginx/{{fc.virtual_host}}.key;
 
-  ssl on;
-
-  # secure configuration, see
-  # https://raymii.org/s/tutorials/Strong_SSL_Security_On_nginx.html#The_BEAST_attack_and_RC4
-  ssl_ciphers 'EECDH+AESGCM:EDH+AESGCM:AES256+EECDH:AES256+EDH';
-  ssl_prefer_server_ciphers on;
-  ssl_session_cache shared:SSL:10m;
+  {{ssl_enabled}}
 }
 {% endif %}
 {% endif -%}
