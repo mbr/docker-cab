@@ -8,6 +8,9 @@ import click
 import jinja2
 from docker.client import Client
 
+from .frontend_container import FrontendContainer
+from .util import Table, exit_err
+
 DEFAULT_URL = 'unix://var/run/docker.sock'
 EVENT_TYPES = ['create', 'destroy', 'die', 'kill', 'oom', 'pause', 'restart',
                'start', 'stop', 'unpause']
@@ -31,101 +34,6 @@ def events_listener(cl, q):
         event = json.loads(ev.decode('ascii'))
 
         q.put(event)
-
-
-class Table(object):
-    def __init__(self, col_sizes=[], spacing=2):
-        self.col_sizes = col_sizes
-        self.spacing = spacing
-        self.space_char = ' '
-
-    def _join_parts(self, parts):
-        return (self.space_char * self.spacing).join(parts)
-
-    def format_row(self, *cols):
-        parts = []
-        for idx, col in enumerate(cols):
-            size = self.col_sizes[idx]
-            tx = str(col)
-            parts.append(tx[:size] + self.space_char * (size - len(tx)))
-        return self._join_parts(parts)
-
-    def format_line(self, char='='):
-        parts = []
-        for n in self.col_sizes:
-            parts.append(char * (n // len(char)))
-        return self._join_parts(parts)
-
-
-def exit_err(msg, status=1):
-    click.echo(msg, err=1)
-    sys.exit(1)
-
-
-class FrontendContainer(object):
-    def __init__(self, net, container):
-        self.net = net
-        self.container = container
-
-    def is_publishable(self):
-        return self.port and (self.virtual_host or self.virtual_path)
-
-    @property
-    def virtual_host(self):
-        return self.env.get('VIRTUAL_HOST')
-
-    @property
-    def virtual_path(self):
-        return self.env.get('VIRTUAL_PATH')
-
-    @property
-    def env(self):
-        return dict(v.split('=', 1) for v in self.container['Config']['Env'])
-
-    @property
-    def id(self):
-        return self.container['Id']
-
-    @property
-    def name(self):
-        return self.container.get('Name') or self.id
-
-    @property
-    def ip(self):
-        return self.network['IPAddress'].split('/', 1)[0]
-
-    @property
-    def addr(self):
-        return self.ip, self.port
-
-    @property
-    def network(self):
-        return self.container['NetworkSettings']['Networks'][self.net]
-
-    @property
-    def port(self):
-        http_port = self.env.get('HTTP_PORT')
-
-        if http_port:
-            return int(http_port)
-
-        ports = [key.split('/', 1)[0]
-                 for key in self.container['NetworkSettings']['Ports'].keys()
-                 if key.endswith('/tcp')]
-
-        if ports:
-            # return lowest exposted port
-            return sorted(ports)[0]
-
-        # no port found
-
-    @classmethod
-    def fetch(cls, cl, net):
-        fcs = []
-        for id in net['Containers'].keys():
-            fcs.append(FrontendContainer(net['Name'], cl.inspect_container(
-                id)))
-        return fcs
 
 
 @click.group()
