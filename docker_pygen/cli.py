@@ -40,51 +40,6 @@ env.filters['port'] = port
 env.filters['env'] = parse_env
 
 
-def update_configurations(cl, template, output_file, notifications):
-    containers = cl.containers()
-    images = cl.images()
-    networks = cl.networks()
-
-    for container in containers:
-        container['_inspect'] = cl.inspect_container(container['Id'])
-
-    for image in images:
-        image['_inspect'] = cl.inspect_image(image['Id'])
-
-    for network in networks:
-        network['_inspect'] = cl.inspect_network(network['Id'])
-
-    # map by id
-    containers = {c['Id']: c for c in containers}
-    images = {i['Id']: i for i in images}
-    networks = {n['Name']: n for n in networks}
-
-    info('Collected {} running containers and {} images'.format(
-        len(containers), len(images)))
-
-    with open(template) as tpl_src:
-        tpl = env.from_string(tpl_src.read())
-
-        result = tpl.render(containers=containers,
-                            images=images,
-                            networks=networks)
-
-    info('Successfully rendered template {}'.format(template))
-
-    out = open(output_file, 'w') if output_file else sys.stdout
-    out.write(result)
-
-    info('Wrote {}'.format(output_file or 'to stdout'))
-
-    # send notifications
-    for signal, cid in notifications:
-        info('Sending {} to {}'.format(signal, cid))
-        try:
-            cl.kill(cid, int(signal) if signal.isnumeric() else signal)
-        except Exception as e:
-            info('Error ignored: {}'.format(e))
-
-
 def events_listener(cl, q):
     # this *should* be threadsafe, as it is going to a different url endpoint
     for ev in cl.events():
@@ -269,17 +224,39 @@ def list(obj):
 def generate(obj, template, output_file, watch, timeout, notifications):
     cl = obj['cl']
 
-    def do_update():
-        update_configurations(cl, template, output_file, notifications)
-
-    do_update()
-
     if watch:
         q = Queue()
         t = Thread(target=events_listener, args=(cl, q), daemon=True)
         t.start()
 
         dirty = False
+
+    while True:
+        fcs = FrontendContainer.fetch(obj['cl'], obj['network'])
+
+        with open(template) as tpl_src:
+            tpl = env.from_string(tpl_src.read())
+
+            result = tpl.render(fcs=[fc for fc in fcs if fc.is_publishable()])
+
+        info('Successfully rendered template {}'.format(template))
+
+        out = open(output_file, 'w') if output_file else sys.stdout
+        out.write(result)
+
+        info('Wrote {}'.format(output_file or 'to stdout'))
+
+        # send notifications
+        for signal, cid in notifications:
+            info('Sending {} to {}'.format(signal, cid))
+            try:
+                cl.kill(cid, int(signal) if signal.isnumeric() else signal)
+            except Exception as e:
+                info('Error ignored: {}'.format(e))
+
+        if not watch:
+            # exit, we're done!
+            sys.exit(0)
 
         while True:
             try:
@@ -290,7 +267,6 @@ def generate(obj, template, output_file, watch, timeout, notifications):
 
                 info('Events settled after {} seconds, updating'.format(
                     timeout))
-                do_update()
                 dirty = False
             else:
                 if not event['Type'] == 'container':
