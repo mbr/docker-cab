@@ -232,7 +232,7 @@ def list(obj):
                         'Virtual Path', ))
     info(tbl.format_line())
 
-    for fc in fcs:
+    for fc in sorted(fcs, key=lambda fc: fc.name):
         col = 'green' if fc.is_publishable() else 'red'
 
         info(click.style(
