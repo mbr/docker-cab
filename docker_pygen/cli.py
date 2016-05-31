@@ -16,13 +16,6 @@ info = partial(click.echo, err=True)
 
 # helpful: https://docs.docker.com/engine/reference/api/images/event_state.png
 
-
-def port(c, ptype='tcp'):
-    ports = [int(port['PublicPort'])
-             for port in c['Ports'] if port['Type'] == ptype and 'IP' in port]
-    return sorted(ports)[0] if ports else None
-
-
 env = jinja2.Environment(
     # undefined=jinja2.StrictUndefined,
     extensions=[
@@ -30,14 +23,6 @@ env = jinja2.Environment(
         'jinja2.ext.with_',
         'jinja2.ext.do',
     ], )
-
-
-def parse_env(c):
-    return dict(v.split('=', 1) for v in c['Config']['Env'])
-
-# env.filters['public_local_ports'] = public_local_ports
-env.filters['port'] = port
-env.filters['env'] = parse_env
 
 
 def events_listener(cl, q):
@@ -95,7 +80,7 @@ class FrontendContainer(object):
 
     @property
     def env(self):
-        return parse_env(self.container)
+        return dict(v.split('=', 1) for v in self.container['Config']['Env'])
 
     @property
     def id(self):
