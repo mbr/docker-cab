@@ -1,3 +1,7 @@
+# FIXME: we should support multiple instances and pooling here
+#        possibly adding a pool id for load-balancing?
+
+
 class FrontendContainer(object):
     def __init__(self, net, container):
         self.net = net
@@ -54,6 +58,11 @@ class FrontendContainer(object):
             return sorted(ports)[0]
 
         # no port found
+
+    @property
+    def ssl_enabled(self):
+        """One of False, True, 'force'"""
+        return True
 
     @classmethod
     def fetch(cls, cl, net):
