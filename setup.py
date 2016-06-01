@@ -21,7 +21,7 @@ setup(name='docker-cab',
       license='MIT',
       packages=find_packages(exclude=['tests']),
       install_requires=['jinja2', 'click', 'docker-py'],
-      data_files=['templates/nginx.tpl'],
+      data_files=['templates/*.tpl'],
       entry_points={
           'console_scripts': [
               'docker-cab = docker_cab.cli:cli',
