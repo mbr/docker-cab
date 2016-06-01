@@ -64,8 +64,8 @@ server {
   listen 443;
   server_name {{fc.virtual_host}};
 
-  ssl_certificate           /etc/nginx/{{fc.virtual_host}}.crt;
-  ssl_certificate_key       /etc/nginx/{{fc.virtual_host}}.key;
+  ssl_certificate           /etc/certs/nginx/{{fc.virtual_host}}.crt;
+  ssl_certificate_key       /etc/certs/nginx/{{fc.virtual_host}}.key;
 
   {{ssl_enabled()}}
 }
