@@ -14,7 +14,7 @@ services:
      - /docker-volumes/cabfront-certs:/etc/certs/nginx
   cab:
     command: ["generate", "--signal", "HUP", "cabfront_reverse_proxy", "--watch", "--output-file", "/etc/nginx/conf.d/docker-cab.conf", "/templates/nginx.tpl"]
-    image: docker-cab:dev
+    image: mbr0/docker-cab:stable
     networks: []
     volumes:
     - /var/run/docker.sock:/var/run/docker.sock
