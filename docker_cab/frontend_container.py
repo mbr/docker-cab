@@ -1,5 +1,7 @@
 # FIXME: we should support multiple instances and pooling here
 #        possibly adding a pool id for load-balancing?
+#        alternatively, use DNS names instead of IPs and have docker
+#        round-robin?
 
 
 class FrontendContainer(object):
