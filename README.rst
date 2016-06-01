@@ -24,7 +24,7 @@ https://hub.docker.com/r/mbr0/docker-cab/)::
 
 Since there is most likely no ``frontnet`` network configured, the output will be
 empty. See **Deploying** for a way to configure containers in a way that makes
-the discoverable by ``docker-cab``.
+them discoverable by ``docker-cab``.
 
 
 
@@ -37,20 +37,20 @@ Deploying
     docker network create frontnet
 
 2. Run docker-compose to start the nginx server (see
-   `cabfront/docker-compose.yml`)::
+   ``cabfront/docker-compose.yml``)::
 
     docker-compose -d
 
-   When testing locally, omit the `-d` for testing.
+   When testing locally, omit the ``-d`` for testing.
 
 At this point, docker-cab is ready. If you wish to add a site with a domain
-name, e.g. `localhost`, these are the steps required:
+name, e.g. ``localhost``, these are the steps required:
 
-1. Copy `localhost.crt` and `localhost.key` to
-   `/docker-volumes/cabfront-certs`. You may need [self-signed certificates](
-   https://www.google.de/search?q=generate+self+signed+certificate) when
+1. Copy ``localhost.crt`` and ``localhost.key`` to
+   ``/docker-volumes/cabfront-certs``. You may need `self-signed certificates
+   <https://www.google.de/search?q=generate+self+signed+certificate>`_ when
    testing locally.
 2. Start the app container, ensuring that it is part of the ``frontnet`` network
-   and has the `VIRTUAL_HOST` environment variable set. Example::
+   and has the ``VIRTUAL_HOST`` environment variable set. Example::
 
      docker run --net=frontnet -e VIRTUAL_HOST=localfoo training/webapp
