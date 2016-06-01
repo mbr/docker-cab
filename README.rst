@@ -23,8 +23,8 @@ https://hub.docker.com/r/mbr0/docker-cab/)::
     docker run -v /var/run/docker.sock:/var/run/docker.sock --rm -it docker-cab list
 
 Since there is most likely no ``frontnet`` network configured, the output will be
-empty. See deploying for a way to configure containers in a way that makes the
-discoverable by ``docker-cab``.
+empty. See **Deploying** for a way to configure containers in a way that makes
+the discoverable by ``docker-cab``.
 
 
 
