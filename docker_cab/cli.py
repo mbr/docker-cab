@@ -134,8 +134,11 @@ def generate(obj, template, output_file, watch, timeout, notifications):
 
         info('Successfully rendered template {}'.format(template))
 
-        out = open(output_file, 'w') if output_file else sys.stdout
-        out.write(result)
+        if output_file:
+            with open(output_file, 'w') as out:
+                out.write(result)
+        else:
+            sys.stdout.write(result)
 
         info('Wrote {}'.format(output_file or 'to stdout'))
 
