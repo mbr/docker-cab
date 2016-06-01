@@ -38,9 +38,9 @@ server {
     proxy_set_header X-Script-Name /{{fc.virtual_path}};
     {{upstream_proxy(fc)}}
   }
-}
-{%- endif -%}
+  {%- endif -%}
 {% endfor -%}
+}
 
 {% for fc in fcs -%}
 {%- if fc.virtual_host %}
