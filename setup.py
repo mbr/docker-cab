@@ -11,23 +11,22 @@ def read(fname):
     return buf.decode('utf8')
 
 
-setup(
-    name='docker-cab',
-    version='0.4.0.dev1',
-    description='Generate configuration files based on docker state changes.',
-    long_description=read('README.rst'),
-    author='Marc Brinkmann',
-    author_email='git@marcbrinkmann.de',
-    url='https://github.com/mbr/docker-cab',
-    license='MIT',
-    packages=find_packages(exclude=['tests']),
-    install_requires=['jinja2', 'click', 'docker-py'],
-    data_files=['templates/nginx.tpl'],
-    entry_points={
-        'console_scripts': [
-            'docker-cab = docker_cab.cli:cli',
-        ],
-    },
-    classifiers=[
-        'Programming Language :: Python :: 3',
-    ])
+setup(name='docker-cab',
+      version='0.4.0.dev1',
+      description='Automatically configures your reverse proxy based.',
+      long_description=read('README.rst'),
+      author='Marc Brinkmann',
+      author_email='git@marcbrinkmann.de',
+      url='https://github.com/mbr/docker-cab',
+      license='MIT',
+      packages=find_packages(exclude=['tests']),
+      install_requires=['jinja2', 'click', 'docker-py'],
+      data_files=['templates/nginx.tpl'],
+      entry_points={
+          'console_scripts': [
+              'docker-cab = docker_cab.cli:cli',
+          ],
+      },
+      classifiers=[
+          'Programming Language :: Python :: 3',
+      ])

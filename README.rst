@@ -7,8 +7,8 @@ in progress.
 Trying it out
 -------------
 
-You can try `docker-cab` right now by using the provided docker image and
-running:
+You can try `docker-cab` right now (an automated build is available at
+https://hub.docker.com/r/mbr0/docker-cab/):
 
     docker run -v /var/run/docker.sock:/var/run/docker.sock --rm -it docker-cab list
 
