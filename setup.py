@@ -12,20 +12,20 @@ def read(fname):
 
 
 setup(
-    name='concierge',
+    name='docker-cab',
     version='0.4.0.dev1',
     description='Generate configuration files based on docker state changes.',
     long_description=read('README.rst'),
     author='Marc Brinkmann',
     author_email='git@marcbrinkmann.de',
-    url='https://github.com/mbr/docker-pygen',
+    url='https://github.com/mbr/docker-cab',
     license='MIT',
     packages=find_packages(exclude=['tests']),
     install_requires=['jinja2', 'click', 'docker-py'],
     data_files=['templates/path.tpl'],
     entry_points={
         'console_scripts': [
-            'concierge = docker_pygen.cli:cli',
+            'docker-cab = docker_pygen.cli:cli',
         ],
     },
     classifiers=[
