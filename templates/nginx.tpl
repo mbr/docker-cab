@@ -1,13 +1,14 @@
 {% macro upstream_proxy(fc) -%}
     proxy_redirect off;
     proxy_buffering off;
-    proxy_pass http://apachephp;
     proxy_next_upstream error timeout invalid_header http_500 http_502 http_503 http_504;
+    proxy_read_timeout 10m;
+
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     proxy_set_header X-Scheme $scheme;
     proxy_set_header Host $host;
-    proxy_read_timeout 10m;
     client_max_body_size 200M;
+
     proxy_pass http://{{fc.ip}}:{{fc.port}};
 {%- endmacro -%}
 
@@ -29,6 +30,8 @@ upstream docker_{{fc.id}} {
 
 {% endfor -%}
 
+{#- disable for now, needs central path-based configuration
+
 server {
   listen 443 default_server;
 {% for fc in fcs -%}
@@ -41,6 +44,8 @@ server {
   {%- endif -%}
 {% endfor -%}
 }
+
+#}
 
 {% for fc in fcs -%}
 {%- if fc.virtual_host %}
@@ -68,6 +73,9 @@ server {
   ssl_certificate_key       /etc/certs/nginx/{{fc.virtual_host}}.key;
 
   {{ssl_enabled()}}
+  location / {
+    {{upstream_proxy(fc)}}
+  }
 }
 {% endif %}
 {% endif -%}
