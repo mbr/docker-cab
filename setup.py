@@ -12,7 +12,7 @@ def read(fname):
 
 
 setup(
-    name='docker-pygen',
+    name='concierge',
     version='0.3.0.dev1',
     description='Generate configuration files based on docker state changes.',
     long_description=read('README.rst'),
@@ -25,7 +25,7 @@ setup(
     data_files=['templates/path.tpl'],
     entry_points={
         'console_scripts': [
-            'docker-pygen = docker_pygen.cli:cli',
+            'concierge = docker_pygen.cli:cli',
         ],
     },
     classifiers=[
