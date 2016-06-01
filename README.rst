@@ -9,7 +9,7 @@ happens. It autogenerates reverse-proxy entries for docker containers that are
 To publish a container, three criterias must be fulfilled:
 
 1. It must be part of the ``frontnet``-network.
-2. An environment variable named `VIRTUAL_HOST` must be present.
+2. An environment variable named ``VIRTUAL_HOST`` must be present.
 3. An SSL certificate chain with a key must be installed (currently, SSL is
    mandatory with docker-cab, not optional).
 
