@@ -1,6 +1,7 @@
 version: '2'
 services:
   reverse_proxy:
+    container_name: cabfront_reverse_proxy
     image: nginx:alpine
     networks:
       - frontnet
@@ -12,12 +13,14 @@ services:
      - /docker-volumes/cabfront-sites-enabled:/etc/nginx/sites-enabled
      - /docker-volumes/cabfront-certs:/etc/certs/nginx
   cab:
-    command: ["generate", "-w", "-o", "/etc/nginx/sites-enabled/docker-cab", "/templates/nginx.tpl"]
+    command: ["generate", "--signal", "HUP", "cabfront_reverse_proxy", "--watch", "--output-file", "/etc/nginx/sites-enabled/docker-cab", "/templates/nginx.tpl"]
     image: docker-cab:dev
     networks: []
     volumes:
     - /var/run/docker.sock:/var/run/docker.sock
     - /docker-volumes/cabfront-sites-enabled:/etc/nginx/sites-enabled
+    depends_on:
+      - reverse_proxy
 networks:
   frontnet:
     external:
