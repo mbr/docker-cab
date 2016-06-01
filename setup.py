@@ -25,7 +25,7 @@ setup(
     data_files=['templates/nginx.tpl'],
     entry_points={
         'console_scripts': [
-            'docker-cab = docker_pygen.cli:cli',
+            'docker-cab = docker_cab.cli:cli',
         ],
     },
     classifiers=[
