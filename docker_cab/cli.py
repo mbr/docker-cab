@@ -12,8 +12,8 @@ from .frontend_container import FrontendContainer
 from .util import Table, exit_err
 
 DEFAULT_URL = 'unix://var/run/docker.sock'
-EVENT_TYPES = ['create', 'destroy', 'die', 'kill', 'oom', 'pause', 'restart',
-               'start', 'stop', 'unpause']
+EVENT_TYPES = ['create', 'destroy', 'die', 'oom', 'pause', 'restart', 'start',
+               'stop', 'unpause']
 
 info = partial(click.echo, err=True)
 
