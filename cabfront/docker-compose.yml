@@ -1,0 +1,17 @@
+version: '2'
+services:
+  reverse_proxy:
+    image: nginx:alpine
+    networks:
+      - frontnet
+    ports:
+     - "80:80"
+     - "443:443"
+    restart: always
+    volumes:
+     - /docker-volumes/cabfront-sites-enabled:/etc/nginx/sites-enabled
+     - /docker-volumes/cabfront-certs:/etc/certs/nginx
+networks:
+  frontnet:
+    external:
+      name: frontnet
