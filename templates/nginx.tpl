@@ -67,7 +67,7 @@ server {
   ssl_certificate           /etc/nginx/{{fc.virtual_host}}.crt;
   ssl_certificate_key       /etc/nginx/{{fc.virtual_host}}.key;
 
-  {{ssl_enabled}}
+  {{ssl_enabled()}}
 }
 {% endif %}
 {% endif -%}
