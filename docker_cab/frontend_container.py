@@ -8,7 +8,14 @@ class FrontendContainer(object):
         self.container = container
 
     def is_publishable(self):
-        return self.port and (self.virtual_host or self.virtual_path)
+        return not self.is_unpublishable()
+
+    def is_unpublishable(self):
+        if not self.virtual_host and not self.virtual_path:
+            return 'Neither VIRTUAL_HOST nor VIRTUAL_PATH set'
+
+        if not self.port:
+            return 'No port exposed'
 
     @property
     def virtual_host(self):
@@ -62,12 +69,13 @@ class FrontendContainer(object):
     @property
     def ssl_enabled(self):
         """One of False, True, 'force'"""
-        return True
+        return 'force'
 
     @classmethod
     def fetch(cls, cl, net):
+        nw = cl.inspect_network(net)
+
         fcs = []
-        for id in net['Containers'].keys():
-            fcs.append(FrontendContainer(net['Name'], cl.inspect_container(
-                id)))
+        for id in nw['Containers'].keys():
+            fcs.append(FrontendContainer(net, cl.inspect_container(id)))
         return fcs

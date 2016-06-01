@@ -64,7 +64,7 @@ def cli(ctx, url, network):
     if not nets:
         exit_err("Could not find a network name {!r}".format(network))
 
-    ctx.obj = {'cl': cl, 'network_name': network, 'network': nets[0]}
+    ctx.obj = {'cl': cl, 'network_name': network, 'network': nets[0]['Name']}
 
 
 @cli.command()
@@ -122,15 +122,23 @@ def generate(obj, template, output_file, watch, timeout, notifications):
         t = Thread(target=events_listener, args=(cl, q), daemon=True)
         t.start()
 
-        dirty = False
-
     while True:
         fcs = FrontendContainer.fetch(obj['cl'], obj['network'])
+        info('Network {!r} has {} containers: {!r}'.format(obj[
+            'network'], len(fcs), [fc.name for fc in fcs]))
 
         with open(template) as tpl_src:
             tpl = env.from_string(tpl_src.read())
 
-            result = tpl.render(fcs=[fc for fc in fcs if fc.is_publishable()])
+            vfcs = []
+            for fc in fcs:
+                reasons = fc.is_unpublishable()
+                if reasons:
+                    info('{}: {}'.format(fc.name, reasons))
+                else:
+                    vfcs.append(fc)
+
+            result = tpl.render(fcs=vfcs)
 
         info('Successfully rendered template {}'.format(template))
 
@@ -154,21 +162,19 @@ def generate(obj, template, output_file, watch, timeout, notifications):
             # exit, we're done!
             sys.exit(0)
 
+        dirty = False
         while True:
             try:
                 event = q.get(block=True, timeout=timeout)
             except Empty:
-                if not dirty:
-                    continue
-
-                info('Events settled after {} seconds, updating'.format(
-                    timeout))
-                dirty = False
+                if dirty:
+                    info('Events settled after {} seconds, updating'.format(
+                        timeout))
+                    break
             else:
                 if not event['Type'] == 'container':
                     continue
 
-                info('Received container event {0[Action]}'.format(event))
-
                 if event['Action'] in EVENT_TYPES:
+                    info('Received container event {0[Action]}'.format(event))
                     dirty = True
