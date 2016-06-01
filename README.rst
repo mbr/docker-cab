@@ -18,7 +18,7 @@ Trying it out
 -------------
 
 You can try ``docker-cab`` right now (an automated build is available at
-https://hub.docker.com/r/mbr0/docker-cab/):
+https://hub.docker.com/r/mbr0/docker-cab/)::
 
     docker run -v /var/run/docker.sock:/var/run/docker.sock --rm -it docker-cab list
 
